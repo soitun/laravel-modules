@@ -147,13 +147,23 @@ abstract class FileRepository implements RepositoryInterface, Countable
             return [];
         }
 
-        $dir      = new \RecursiveDirectoryIterator($folder);
-        $ite      = new \RecursiveIteratorIterator($dir);
+        if (in_array($filename, $this->config('scan.exclude', []))) {
+            return [];
+        }
+
+        // Iterate directories
+        $dirs = new \FilesystemIterator($folder, 
+            \FilesystemIterator::KEY_AS_PATHNAME
+            | \FilesystemIterator::CURRENT_AS_FILEINFO 
+            | \FilesystemIterator::SKIP_DOTS 
+            | \FilesystemIterator::FOLLOW_SYMLINKS
+        );
+
         $fileList = [];
-        foreach ($ite as $file) {
-            /** @var SplFileInfo $file */
-            if ($file->getFilename() === $filename) {
-                $fileList[] = $file->getPathname();
+        foreach ($dirs as $dir) {
+            $Pathname = $dir->getPathname() . '/' . $filename;
+            if (is_file($Pathname)) {
+                $fileList[] = $Pathname;
             }
         }
 
@@ -369,7 +379,6 @@ abstract class FileRepository implements RepositoryInterface, Countable
                 return $module;
             }
         }
-
     }
 
     /**
@@ -382,7 +391,6 @@ abstract class FileRepository implements RepositoryInterface, Countable
                 return $module;
             }
         }
-
     }
 
     /**
